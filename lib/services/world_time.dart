@@ -1,6 +1,9 @@
+import 'package:get/get_state_manager/get_state_manager.dart';
+import 'package:get/instance_manager.dart';
 import 'package:http/http.dart';
 import 'dart:convert';
 import 'package:intl/intl.dart';
+import 'package:world_time/controller/loader_controller.dart';
 
 class WorldTime {
   String location; //location name for the UI
@@ -43,17 +46,27 @@ class WorldTime {
     Response response = await get(url_path);
     List data = jsonDecode(response.body);
     List<WorldTime> countryList = data.map((e) {
-      String cityName = e.substring(e.lastIndexOf('/') + 1);
+      String cityName = e.substring(e.lastIndexOf(' ') + 1);
+
       cityName = cityName.replaceAll('_', ' ');
+
       return WorldTime(url: e, location: cityName);
     }).toList();
     return countryList;
   }
 
+  
   Future<void> getWeather() async {
+    final controller = Get.put(LoaderController());
     try {
+      final endIndex = location.split("/")[1];
+     
+      final  finalCityName = controller.textHide.value == false
+          ?  controller.AddressCityName.value
+          : endIndex;
+      // print(location.substring(endIndex, location.length));
       var url_path = Uri.parse(
-          '$_weatherAPI?q=${location}&appid=441da477a820a1292657bf1849af44eb&lang=de&units=metric');
+          '$_weatherAPI?q=${finalCityName}&appid=441da477a820a1292657bf1849af44eb&lang=de&units=metric');
       Response response = await get(url_path);
       Map data = jsonDecode(response.body);
       weatherData = data;

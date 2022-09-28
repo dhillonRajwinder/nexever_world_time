@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// ignore: must_be_immutable
 class WeatherWidget extends StatelessWidget {
   var weatherData;
   WeatherWidget({required this.weatherData});

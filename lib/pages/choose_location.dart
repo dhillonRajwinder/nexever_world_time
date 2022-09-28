@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:world_time/controller/loader_controller.dart';
 import 'package:world_time/services/world_time.dart';
 import 'package:http/http.dart';
 import 'dart:convert';
@@ -11,10 +13,10 @@ class ChooseLocation extends StatefulWidget {
 
 class _ChooseLocationState extends State<ChooseLocation> {
   TextEditingController editingController = TextEditingController();
-
+  final controller = Get.put(LoaderController());
   var _future;
   String searchString = "";
-
+  bool loader = false;
   @override
   void initState() {
     super.initState();
@@ -31,108 +33,129 @@ class _ChooseLocationState extends State<ChooseLocation> {
           centerTitle: true,
           elevation: 0,
         ),
-        body: Column(
+        body: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    searchString = value.toLowerCase();
-                  });
-                },
-                controller: editingController,
-                decoration: InputDecoration(
-                    labelText: "Search",
-                    hintText: "Search",
-                    fillColor: Colors.grey[100],
-                    filled: true,
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(25.0)))),
-              ),
+            Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: TextField(
+                    onChanged: (value) {
+                      setState(() {
+                        searchString = value.toLowerCase();
+                      });
+                    },
+                    controller: editingController,
+                    decoration: InputDecoration(
+                        labelText: "Search",
+                        hintText: "Search",
+                        fillColor: Colors.grey[100],
+                        filled: true,
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(25.0)))),
+                  ),
+                ),
+                FutureBuilder(
+                  future: _future,
+                  builder: (context, AsyncSnapshot snapshot) {
+                    if (snapshot.hasData) {
+                      return Expanded(
+                        child: ListView.builder(
+                          itemCount: snapshot.data.length,
+                          itemBuilder: (context, index) {
+                            return snapshot.data[index].location
+                                    .toString()
+                                    .toLowerCase()
+                                    .contains(searchString)
+                                ? Card(
+                                    child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: 1, horizontal: 4),
+                                    child: ListTile(
+                                      onTap: () async {
+                                        setState(() {
+                                          loader = true;
+                                        });
+                                        controller.textHide.value = true;
+                                        await snapshot.data[index].getTime();
+                                        await snapshot.data[index].getWeather();
+
+                                        // the same thing as what the arrow do: Pop:
+                                        Navigator.pop(context, {
+                                          "location":
+                                              snapshot.data[index].location,
+                                          //flag": snapshot.data[index].flag,
+                                          "time": snapshot.data[index].time,
+                                          "isDaytime":
+                                              snapshot.data[index].isDaytime,
+                                          "url": snapshot.data[index].url,
+                                          "weatherData":
+                                              snapshot.data[index].weatherData
+                                        });
+                                      },
+                                      title: Text(snapshot.data[index].location
+                                          .toString()),
+                                      //leading: CircleAvatar(backgroundImage: AssetImage('assets/${ snapshot.data[index].flag}'),),
+                                    ),
+                                  ))
+                                : Container();
+                          },
+                        ),
+                      );
+                    } else if (snapshot.hasError) {
+                      return Center(
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 60,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16),
+                                child: Text('Error: ${snapshot.error}'),
+                              )
+                            ]),
+                      );
+                    } else if (snapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return Expanded(
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: <Widget>[
+                              SizedBox(
+                                child: CircularProgressIndicator(),
+                                width: 60,
+                                height: 60,
+                              ),
+                              Padding(
+                                padding: EdgeInsets.only(top: 16),
+                                child: Text('Loading...'),
+                              )
+                            ]),
+                      );
+                    } else {
+                      return Text("Error!");
+                    }
+                  },
+                ),
+              ],
             ),
-            FutureBuilder(
-              future: _future,
-              builder: (context, AsyncSnapshot snapshot) {
-                if (snapshot.hasData) {
-                  return Expanded(
-                    child: ListView.builder(
-                      itemCount: snapshot.data.length,
-                      itemBuilder: (context, index) {
-                        return snapshot.data[index].location
-                                .toString()
-                                .toLowerCase()
-                                .contains(searchString)
-                            ? Card(
-                                child: Padding(
-                                padding: EdgeInsets.symmetric(
-                                    vertical: 1, horizontal: 4),
-                                child: ListTile(
-                                  onTap: () async {
-                                    await snapshot.data[index].getTime();
-                                    await snapshot.data[index].getWeather();
-                                    // the same thing as what the arrow do: Pop:
-                                    Navigator.pop(context, {
-                                      "location": snapshot.data[index].location,
-                                      //flag": snapshot.data[index].flag,
-                                      "time": snapshot.data[index].time,
-                                      "isDaytime":
-                                          snapshot.data[index].isDaytime,
-                                      "url": snapshot.data[index].url,
-                                      "weatherData":
-                                          snapshot.data[index].weatherData
-                                    });
-                                  },
-                                  title: Text(
-                                      snapshot.data[index].location.toString()),
-                                  //leading: CircleAvatar(backgroundImage: AssetImage('assets/${ snapshot.data[index].flag}'),),
-                                ),
-                              ))
-                            : Container();
-                      },
+            loader == true
+                ? Container(
+                    height: double.infinity,
+                    width: double.infinity,
+                    color: Colors.transparent,
+                    child: Center(
+                      child: CircularProgressIndicator(),
                     ),
-                  );
-                } else if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          const Icon(
-                            Icons.error_outline,
-                            color: Colors.red,
-                            size: 60,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: Text('Error: ${snapshot.error}'),
-                          )
-                        ]),
-                  );
-                } else if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
-                  return Expanded(
-                    child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: <Widget>[
-                          SizedBox(
-                            child: CircularProgressIndicator(),
-                            width: 60,
-                            height: 60,
-                          ),
-                          Padding(
-                            padding: EdgeInsets.only(top: 16),
-                            child: Text('Loading...'),
-                          )
-                        ]),
-                  );
-                } else {
-                  return Text("Error!");
-                }
-              },
-            ),
+                  )
+                : Container()
           ],
         ));
   }
