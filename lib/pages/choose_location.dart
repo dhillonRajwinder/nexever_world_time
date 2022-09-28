@@ -150,7 +150,7 @@ class _ChooseLocationState extends State<ChooseLocation> {
                 ? Container(
                     height: double.infinity,
                     width: double.infinity,
-                    color: Colors.transparent,
+                    color: Color.fromARGB(0, 159, 155, 155).withOpacity(.4),
                     child: Center(
                       child: CircularProgressIndicator(),
                     ),

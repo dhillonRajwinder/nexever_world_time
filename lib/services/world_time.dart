@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:get/instance_manager.dart';
 import 'package:http/http.dart';
@@ -11,6 +12,7 @@ class WorldTime {
   String? flag; // URL to an asset flag icon
   String? url; //location url for API endpoint
   bool? isDaytime;
+
   static const _endPoint = "http://worldtimeapi.org/api/timezone";
   static const _weatherAPI = "https://api.openweathermap.org/data/2.5/weather";
   var weatherData;
@@ -55,19 +57,24 @@ class WorldTime {
     return countryList;
   }
 
-  
-  Future<void> getWeather() async {
-    final controller = Get.put(LoaderController());
+  final controller = Get.put(LoaderController());
+
+//  controller.getWeather(String location,var weatherData)
+
+  Future<void> getWeather(String finalCityNme) async {
     try {
-      final endIndex = location.split("/")[1];
-     
-      final  finalCityName = controller.textHide.value == false
-          ?  controller.AddressCityName.value
+      final endIndex = location.contains("/")?location.split("/")[1]:location;
+
+      final finalCityName = controller.textHide.value == false
+          ? finalCityNme
           : endIndex;
+
+           print("finalCityName ==============>>>>>>  $finalCityName");
       // print(location.substring(endIndex, location.length));
       var url_path = Uri.parse(
           '$_weatherAPI?q=${finalCityName}&appid=441da477a820a1292657bf1849af44eb&lang=de&units=metric');
       Response response = await get(url_path);
+      print("response datat ==============>>>>>>  ${response.body}");
       Map data = jsonDecode(response.body);
       weatherData = data;
     } catch (e) {

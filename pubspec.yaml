@@ -30,6 +30,11 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^0.13.4
+  # flutter_localizations:
+  # flutter_intl:
+  #   enabled: true
+  #   class_name: S # Optional. Sets the name for the generated localization class. Default: S
+  #   main_locale: en
   geolocator: #latest version
   geocoding:
   intl: ^0.17.0

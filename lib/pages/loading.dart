@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/instance_manager.dart';
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:world_time/controller/loader_controller.dart';
 import 'package:world_time/services/helperFunctions.dart';
 import 'dart:convert';
 import 'package:world_time/services/world_time.dart';
@@ -23,7 +25,7 @@ class _LoadingState extends State<Loading> {
       WorldTime instance =
           WorldTime(flag: 'germany.png', location: location, url: url);
       await instance.getTime();
-      await instance.getWeather();
+      await instance.getWeather(controller.AddressCityName.value);
       //Navigator.pushNamed(context, '/home');
       // we push this route on top of the loading route, but we dont want to keep the loading routes underneath so :
       Navigator.pushReplacementNamed(context, '/home', arguments: {
@@ -41,11 +43,15 @@ class _LoadingState extends State<Loading> {
     }
   }
 
+  final controller = Get.put(LoaderController());
   @override
   void initState() {
-    super
-        .initState(); // this says: run the original function at first (that we are overriding)
-    setupWorldTime();
+    super.initState();
+    controller.firstFun().then((value) {
+      setupWorldTime();
+    }).catchError((e) {
+      print("ERROR==>${e.toString()}");
+    }); // this says: run the original function at first (that we are overriding)
   }
 
   final spinkit = SpinKitSquareCircle(

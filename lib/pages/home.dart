@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -15,12 +17,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:world_time/widgets/WeatherWidget.dart';
 
 class Home extends StatefulWidget {
+  Home();
+
   @override
   _HomeState createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  final controller = Get.put(LoaderController());
+  final LoaderController controller = Get.find();
   Map data = {};
   final db = Localstore.instance;
   var currentLocation = '';
@@ -32,50 +36,17 @@ class _HomeState extends State<Home> {
   // @override
   // initState() {
   //   super.initState();
-  //   firstFun();
+  //   setCurrentValues();
   //   print(("=====>initState<======"));
   // }
 
-  // firstFun() async {
-  //   Position position = await _getGeoLocationPosition();
-  //   location = 'Lat: ${position.latitude} , Long: ${position.longitude}';
-  //   GetAddressFromLatLong(position);
-  // }
+  // String? currentDefaultSystemLocale;
+  // List<Locale>? currentSystemLocales;
 
-  // Future<Position> _getGeoLocationPosition() async {
-  //   bool serviceEnabled;
-  //   LocationPermission permission;
-  //   serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  //   if (!serviceEnabled) {
-  //     await Geolocator.openLocationSettings();
-  //     return Future.error('Location services are disabled.');
-  //   }
-  //   permission = await Geolocator.checkPermission();
-  //   if (permission == LocationPermission.denied) {
-  //     permission = await Geolocator.requestPermission();
-  //     if (permission == LocationPermission.denied) {
-  //       return Future.error('Location permissions are denied');
-  //     }
-  //   }
-  //   if (permission == LocationPermission.deniedForever) {
-  //     return Future.error(
-  //         'Location permissions are permanently denied, we cannot request permissions.');
-  //   }
-  //   return await Geolocator.getCurrentPosition(
-  //       desiredAccuracy: LocationAccuracy.high);
-  // }
-
-  // Future<void> GetAddressFromLatLong(Position position) async {
-  //   List<Placemark> placemarks =
-  //       await placemarkFromCoordinates(position.latitude, position.longitude);
-  //   print(placemarks);
-  //   print(tdata);
-  //   Placemark place = placemarks[0];
-  //   AddressCityName = '${place.locality}';
-  //   Address =
-  //       //'${place.street}, ${place.subLocality},${place.postalCode},
-  //       ' ${place.locality}/${place.country}';
-  //   setState(() {});
+  // // Here we read the current locale values
+  // void setCurrentValues() {
+  //   currentSystemLocales = WidgetsBinding.instance.window.locales;
+  //   currentDefaultSystemLocale = Platform.localeName;
   // }
 
   @override
@@ -91,11 +62,13 @@ class _HomeState extends State<Home> {
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          WorldTime instance =
-              WorldTime(location: data["location"], url: data["url"]);
+          WorldTime instance = WorldTime(
+            location: data["location"],
+            url: data["url"],
+          );
           if (await HelperFunctions.checkIntenetConnection()) {
             await instance.getTime();
-            await instance.getWeather();
+            await instance.getWeather(controller.AddressCityName.value);
             setState(() {
               data["location"] = instance.location;
               data["time"] = instance.time;
@@ -119,8 +92,10 @@ class _HomeState extends State<Home> {
                   child: Padding(
                 padding: const EdgeInsets.fromLTRB(0, 120, 0, 0),
                 child: Column(children: <Widget>[
-                  // Text('${Address}',
-                  //     style: TextStyle(color: Colors.white, letterSpacing: 2)),
+                  Obx(() => Text('${controller.AddressCityName}',
+                      style: TextStyle(
+                        color: Colors.white,
+                      ))),
                   TextButton.icon(
                       onPressed: () async {
                         dynamic result =
@@ -170,6 +145,7 @@ class _HomeState extends State<Home> {
                       )),
                   SizedBox(height: 20),
                   WeatherWidget(
+                    //code : widget.systemLocales,
                     weatherData: data["weatherData"],
                   ),
                 ]),
