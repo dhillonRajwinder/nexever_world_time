@@ -13,7 +13,7 @@ class WorldTime {
   String? url; //location url for API endpoint
   bool? isDaytime;
 
-  static const _endPoint = "http://worldtimeapi.org/api/timezone";
+  static const _endPoint = "https://worldtimeapi.org/api/timezone";
   static const _weatherAPI = "https://api.openweathermap.org/data/2.5/weather";
   var weatherData;
 
